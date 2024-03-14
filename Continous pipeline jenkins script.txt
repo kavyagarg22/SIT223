@@ -1,0 +1,76 @@
+pipeline {
+    agent any
+    
+    stages {
+        stage('Build') {
+            steps {
+                echo 'Dependency installation...'
+                echo 'Building the application...'
+                git branch: 'main', url: 'https://github.com/kavyagarg22/sit313-task10.1.git'
+            }
+        }
+        stage('Testing') {
+            steps {
+                echo 'Executing tests...'
+                sendEmailNotification("Test succeeded.", "The test phase has passed.")
+            }
+        }
+        stage('Code Analysis') {
+            steps {
+                echo 'Analyzing code quality...'
+            }
+        }
+        stage('Security') {
+            steps {
+                echo 'Conducting security scans...'
+                sendEmailNotification("Security checks passed.", "The pipeline has successfully cleared security checks.")
+            }
+        }
+        stage('Deploy Staging') {
+            steps {
+                echo 'Deploying to staging environment...'
+            }
+        }
+        stage('Integration Test') {
+            steps {
+                echo 'Performing integration tests...'
+            }
+        }
+        stage('Deploy Production') {
+            steps {
+                echo 'Deploying to production environment...'
+            }
+        }
+    }
+    
+    post {
+        success {
+            emailext subject: "Pipeline '${currentBuild.fullDisplayName}' Successful",
+                      body: 'The build was successful. Congratulations!',
+                      to: 'kavyagarg55@gmail.com',
+                      attachLog: true
+        }
+          
+        failure {
+            emailext subject: "Pipeline '${currentBuild.fullDisplayName}' Failed",
+                      body: 'The build has failed. Please investigate.',
+                      to: 'kavyagarg55@gmail.com',
+                      attachLog: true
+        }
+    }
+}
+
+def sendEmailNotification(subject, body) {
+    def emailScript = """
+        \$SMTPServer = "smtp.gmail.com"
+        \$SMTPFrom = "kavyagarg55@gmail.com"
+        \$SMTPTo = "kavyagarg55@gmail.com"
+        \$SMTPSubject = "$subject"
+        \$SMTPBody = "$body"
+        \$SMTPUsername = "kavyagarg55@gmail.com"
+        \$SMTPPassword = "vapx ottr wtve iqi"
+
+        Send-MailMessage -From \$SMTPFrom -To \$SMTPTo -Subject \$SMTPSubject -Body \$SMTPBody -SmtpServer \$SMTPServer -UseSsl -Port 587 -Credential (New-Object System.Management.Automation.PSCredential (\$SMTPUsername, (ConvertTo-SecureString -AsPlainText \$SMTPPassword -Force)))
+    """
+    powershell(emailScript)
+}
